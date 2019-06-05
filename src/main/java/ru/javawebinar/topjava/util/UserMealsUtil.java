@@ -34,8 +34,7 @@ public class UserMealsUtil {
                     result.add(new UserMealWithExceed(i.getDateTime(), i.getDescription(), i.getCalories(),
                             mealList.stream()
                                     .filter(s->s.getDateTime().toLocalDate().equals(date))
-                                    .mapToInt(UserMeal::getCalories)
-                                    .reduce((acc,s)->acc + s).getAsInt() > caloriesPerDay ));
+                                    .mapToInt(UserMeal::getCalories).sum() > caloriesPerDay ));
                 });
         return result;
     }
