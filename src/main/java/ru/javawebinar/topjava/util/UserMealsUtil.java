@@ -7,8 +7,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Month;
-import java.time.chrono.ChronoLocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class UserMealsUtil {
     public static void main(String[] args) {
@@ -27,28 +27,16 @@ public class UserMealsUtil {
 
     public static List<UserMealWithExceed>  getFilteredWithExceeded(List<UserMeal> mealList, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
         List<UserMealWithExceed> result = new ArrayList<>();
-        List<UserMeal> temp = new ArrayList<>();
-        HashMap<LocalDate,Integer> map = new HashMap<>();
 
-        mealList.forEach(i-> {
+        mealList.stream().filter(i -> TimeUtil.isBetween(i.getDateTime().toLocalTime(), startTime, endTime)).collect(Collectors.toList())
+                .forEach(i->{
                     LocalDate date = i.getDateTime().toLocalDate();
-                    if(!map.containsKey(date))
-                        map.put(date,i.getCalories());
-                    else map.put(date,map.get(date)+i.getCalories());
-                    if(TimeUtil.isBetween(i.getDateTime().toLocalTime(),startTime,endTime)){
-                        temp.add(i);
-                    }
+                    result.add(new UserMealWithExceed(i.getDateTime(), i.getDescription(), i.getCalories(),
+                            mealList.stream()
+                                    .filter(s->s.getDateTime().toLocalDate().equals(date))
+                                    .mapToInt(UserMeal::getCalories)
+                                    .reduce((acc,s)->acc + s).getAsInt() > caloriesPerDay ));
                 });
-
-        temp.forEach(i-> {
-            boolean exceed = false;
-            for(Map.Entry<LocalDate,Integer> m : map.entrySet()){
-                if(m.getKey().equals(i.getDateTime().toLocalDate()) && m.getValue()>=caloriesPerDay)
-                    exceed=true;
-            }
-            result.add(new UserMealWithExceed(i.getDateTime(),i.getDescription(),i.getCalories(),exceed));
-        });
-
         return result;
     }
 }
